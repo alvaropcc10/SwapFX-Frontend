@@ -1,24 +1,36 @@
-# SwapFX (swapfx-frontend)
+# SwapFX - Frontend
 
-## Install the dependencies
+Plataforma Web P2P de Intercambio de Divisas
 
-```bash
-pnpm install
-# or: yarn/npm/bun install
-```
+## Integrantes
+- 24200430 - CRISOSTOMO CERVANTES, Alvaro Paul
+- 22200555 - YUEN HORNA, Javier Orlando
 
-### Start the app in development mode (HMR, error reporting, etc.)
+## Curso
+Desarrollo de Ambiente Web - Seccion S-001
+Profesor: CHANG URIBE LUIS ALBERTO
+Universidad ESAN
 
-```bash
-quasar dev
-```
+## Stack Tecnologico
+- Vue 3 + Quasar Framework v2
+- Pinia (state management)
+- Axios (HTTP client)
+- Vue Router
 
-### Build the app for production
+## URLs de produccion
+- Frontend: https://swapfx-frontend.onrender.com
+- Backend API: https://swapfx-backend.onrender.com/swagger
 
-```bash
-quasar build
-```
+## Como ejecutar localmente
+1. npm install
+2. npm run dev
+3. Abrir http://localhost:9000
 
-### Customize the configuration
-
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
+## Modulos implementados
+- Autenticacion (login, registro)
+- Ofertas (listar, publicar, filtrar por moneda y tipo)
+- Tipo de cambio en tiempo real (Frankfurter API)
+- Transacciones (iniciar, detalle, comprobante, cancelar, disputar)
+- Notificaciones
+- Mi Perfil y Cuentas Bancarias
+- Panel de Administracion

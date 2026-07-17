@@ -97,10 +97,36 @@
                 <q-item-label caption>{{ o.tipo === 'C' ? 'Compra' : 'Venta' }} · {{ o.estado }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-btn flat round dense icon="delete" color="negative" @click="eliminarOferta(o.id)" />
+                <div class="row q-gutter-xs">
+                  <q-btn flat round dense icon="edit" color="blue-9" @click="abrirEditar(o)" />
+                  <q-btn flat round dense icon="delete" color="negative" @click="eliminarOferta(o.id)" />
+                </div>
               </q-item-section>
             </q-item>
           </q-list>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <!-- dialog editar oferta -->
+    <q-dialog v-model="verEditar" persistent>
+      <q-card style="min-width: 380px">
+        <q-bar class="bg-blue-9 text-white">
+          <q-icon name="edit" />
+          <div class="q-ml-sm">Editar oferta</div>
+          <q-space />
+          <q-btn dense flat icon="close" v-close-popup />
+        </q-bar>
+        <q-card-section>
+          <q-form @submit.prevent="guardarEdicion" class="column q-gutter-sm">
+            <q-input v-model.number="ofertaEditando.monto" label="Monto" type="number" outlined dense :rules="[v => v > 0 || 'Debe ser mayor a 0']" />
+            <q-input v-model.number="ofertaEditando.tipoCambio" label="Tipo de cambio" type="number" step="0.0001" outlined dense :rules="[v => v > 0 || 'Debe ser mayor a 0']" />
+            <q-input v-model="ofertaEditando.notas" label="Notas (opcional)" outlined dense />
+            <div class="row justify-end q-gutter-sm q-mt-sm">
+              <q-btn flat label="Cancelar" v-close-popup />
+              <q-btn type="submit" color="blue-9" label="Guardar" unelevated :loading="guardandoEdicion" />
+            </div>
+          </q-form>
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -151,6 +177,8 @@ const cargandoTipoCambio = ref(false)
 const iniciando = ref(false)
 const verPublicar = ref(false)
 const verMisOfertas = ref(false)
+const verEditar = ref(false)
+const guardandoEdicion = ref(false)
 const verConfirmarTx = ref(false)
 const ofertaSeleccionada = ref(null)
 const paginaActual = ref(1)
@@ -171,6 +199,8 @@ const nuevaOferta = reactive({
   validezHoras: 24,
   notas: '',
 })
+
+const ofertaEditando = reactive({ id: null, monto: null, tipoCambio: null, notas: '' })
 
 const filtrosActivos = ref({})
 
@@ -257,6 +287,34 @@ async function publicarOferta() {
     $q.notify({ type: 'negative', message: 'Error al publicar la oferta' })
   } finally {
     publicando.value = false
+  }
+}
+
+function abrirEditar(oferta) {
+  ofertaEditando.id = oferta.id
+  ofertaEditando.monto = oferta.monto
+  ofertaEditando.tipoCambio = oferta.tipoCambio
+  ofertaEditando.notas = oferta.notas ?? ''
+  verEditar.value = true
+}
+
+async function guardarEdicion() {
+  guardandoEdicion.value = true
+  try {
+    await api.put('/api/oferta', {
+      id: ofertaEditando.id,
+      monto: ofertaEditando.monto,
+      tipoCambio: ofertaEditando.tipoCambio,
+      notas: ofertaEditando.notas,
+    })
+    verEditar.value = false
+    $q.notify({ type: 'positive', message: 'Oferta actualizada correctamente' })
+    cargarMisOfertas()
+    cargarOfertas()
+  } catch {
+    $q.notify({ type: 'negative', message: 'Error al actualizar la oferta' })
+  } finally {
+    guardandoEdicion.value = false
   }
 }
 

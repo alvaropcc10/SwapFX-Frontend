@@ -1,11 +1,14 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="text-h5 text-blue-9 q-mb-md">Mi perfil</div>
+    <div class="q-mb-lg">
+      <div class="text-h5 text-weight-bold text-dark">Mi perfil</div>
+      <div class="text-caption text-grey-6">Gestiona tu informacion personal y cuentas bancarias</div>
+    </div>
 
     <div class="row q-gutter-md">
       <!-- datos personales -->
       <div class="col-12 col-md-5">
-        <q-card flat bordered>
+        <q-card flat bordered style="border-radius:12px; border:1px solid #E3F2FD">
           <q-card-section>
             <div class="text-subtitle1 text-blue-9 text-weight-bold q-mb-sm">Datos personales</div>
             <div class="column q-gutter-xs">
@@ -38,7 +41,7 @@
         </q-card>
 
         <!-- validacion de identidad -->
-        <q-card flat bordered class="q-mt-md">
+        <q-card flat bordered class="q-mt-md" style="border-radius:12px; border:1px solid #E3F2FD">
           <q-card-section>
             <div class="text-subtitle1 text-blue-9 text-weight-bold q-mb-sm">Validacion de identidad</div>
             <div class="row items-center q-gutter-sm">
@@ -62,7 +65,7 @@
 
       <!-- cuentas bancarias -->
       <div class="col">
-        <q-card flat bordered>
+        <q-card flat bordered style="border-radius:12px; border:1px solid #E3F2FD">
           <q-card-section>
             <div class="row items-center justify-between q-mb-sm">
               <div class="text-subtitle1 text-blue-9 text-weight-bold">Cuentas bancarias</div>

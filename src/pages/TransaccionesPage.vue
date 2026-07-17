@@ -1,7 +1,10 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center justify-between q-mb-md">
-      <div class="text-h5 text-blue-9">Mis transacciones</div>
+    <div class="row items-center justify-between q-mb-lg">
+      <div>
+        <div class="text-h5 text-weight-bold text-dark">Mis transacciones</div>
+        <div class="text-caption text-grey-6">Historial de tus operaciones de intercambio</div>
+      </div>
       <div class="row q-gutter-sm">
         <q-btn color="green" label="Exportar Excel" icon="download" unelevated dense @click="exportarExcel" />
         <q-btn color="red" label="Exportar PDF" icon="picture_as_pdf" unelevated dense @click="exportarPDF" />
@@ -19,7 +22,16 @@
     </div>
 
     <div v-else>
-      <q-card v-for="tx in transacciones" :key="tx.id" flat bordered class="q-mb-sm cursor-pointer" @click="verDetalle(tx.id)">
+      <q-card
+        v-for="tx in transacciones"
+        :key="tx.id"
+        flat
+        class="q-mb-sm cursor-pointer transaccion-card"
+        style="border-radius:12px; border:1px solid #E3F2FD; transition: box-shadow 0.2s"
+        @click="verDetalle(tx.id)"
+        @mouseenter="$event.currentTarget.style.boxShadow='0 4px 20px rgba(21,101,192,0.12)'"
+        @mouseleave="$event.currentTarget.style.boxShadow='none'"
+      >
         <q-card-section>
           <div class="row items-center q-gutter-md">
             <div class="col">

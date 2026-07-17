@@ -3,6 +3,7 @@
     <div class="text-h5 text-orange q-mb-md">Panel de administracion — Grupo 2 / Alvaro</div>
 
     <q-tabs v-model="tab" dense align="left" class="text-orange">
+      <q-tab name="dashboard" label="Dashboard" icon="dashboard" />
       <q-tab name="usuarios" label="Usuarios" icon="people" />
       <q-tab name="transacciones" label="Transacciones" icon="receipt_long" />
       <q-tab name="disputas" label="Disputas" icon="warning" />
@@ -10,6 +11,48 @@
     <q-separator />
 
     <q-tab-panels v-model="tab" animated>
+      <!-- dashboard -->
+      <q-tab-panel name="dashboard">
+        <div class="row q-gutter-md">
+          <q-card flat bordered class="col-grow">
+            <q-card-section>
+              <div class="text-caption text-grey">Total usuarios</div>
+              <div class="text-h5 text-orange">{{ totalUsuarios }}</div>
+            </q-card-section>
+          </q-card>
+          <q-card flat bordered class="col-grow">
+            <q-card-section>
+              <div class="text-caption text-grey">Usuarios activos</div>
+              <div class="text-h5 text-orange">{{ usuariosActivos }}</div>
+            </q-card-section>
+          </q-card>
+          <q-card flat bordered class="col-grow">
+            <q-card-section>
+              <div class="text-caption text-grey">Total transacciones</div>
+              <div class="text-h5 text-orange">{{ totalTransacciones }}</div>
+            </q-card-section>
+          </q-card>
+          <q-card flat bordered class="col-grow">
+            <q-card-section>
+              <div class="text-caption text-grey">Transacciones finalizadas</div>
+              <div class="text-h5 text-orange">{{ transaccionesFinalizadas }}</div>
+            </q-card-section>
+          </q-card>
+          <q-card flat bordered class="col-grow">
+            <q-card-section>
+              <div class="text-caption text-grey">Disputas activas</div>
+              <div class="text-h5 text-orange">{{ disputasActivas }}</div>
+            </q-card-section>
+          </q-card>
+          <q-card flat bordered class="col-grow">
+            <q-card-section>
+              <div class="text-caption text-grey">Tasa de finalizacion</div>
+              <div class="text-h5 text-orange">{{ tasaFinalizacion }}%</div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </q-tab-panel>
+
       <!-- usuarios -->
       <q-tab-panel name="usuarios">
         <div v-if="cargandoUsuarios" class="text-center q-pa-xl"><q-spinner color="orange" size="2em" /></div>
@@ -120,12 +163,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import api from '@/services/api'
 
 const $q = useQuasar()
-const tab = ref('usuarios')
+const tab = ref('dashboard')
 const usuarios = ref([])
 const transacciones = ref([])
 const disputas = ref([])
@@ -156,6 +199,16 @@ const columnasTx = [
   { name: 'estado', label: 'Estado', field: 'estadoActual', align: 'center' },
   { name: 'fecha', label: 'Fecha', field: 'fechaInicio', align: 'left', format: v => v ? new Date(v).toLocaleDateString('es-PE') : '-' },
 ]
+
+const totalUsuarios = computed(() => usuarios.value.length)
+const usuariosActivos = computed(() => usuarios.value.filter(u => u.isActive).length)
+const totalTransacciones = computed(() => transacciones.value.length)
+const transaccionesFinalizadas = computed(() => transacciones.value.filter(t => t.estadoActual === 'FINALIZADA').length)
+const disputasActivas = computed(() => disputas.value.filter(d => d.estado !== 'RESUELTA').length)
+const tasaFinalizacion = computed(() => {
+  if (totalTransacciones.value === 0) return 0
+  return ((transaccionesFinalizadas.value / totalTransacciones.value) * 100).toFixed(1)
+})
 
 async function cargarUsuarios() {
   cargandoUsuarios.value = true

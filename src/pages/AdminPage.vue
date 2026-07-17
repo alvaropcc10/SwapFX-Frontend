@@ -13,44 +13,128 @@
 
     <q-tab-panels v-model="tab" animated>
       <!-- dashboard -->
-      <q-tab-panel name="dashboard">
-        <div class="row q-gutter-md">
-          <q-card flat bordered class="col-grow">
+      <q-tab-panel name="dashboard" class="q-pa-none">
+        <div class="q-pa-md">
+
+          <!-- filtro periodo -->
+          <div class="row items-center justify-between q-mb-lg">
+            <div class="text-h6 text-weight-bold text-dark">Resumen general</div>
+            <q-select
+              v-model="periodo"
+              :options="opcionesPeriodo"
+              dense outlined
+              style="min-width:160px"
+              emit-value map-options
+              @update:model-value="actualizarDashboard"
+            />
+          </div>
+
+          <!-- KPI cards -->
+          <div class="row q-gutter-md q-mb-lg">
+            <q-card flat class="col kpi-card" style="border-radius:12px; border-left: 4px solid #1565C0">
+              <q-card-section class="q-pa-md">
+                <div class="row items-center justify-between">
+                  <div>
+                    <div class="text-caption text-grey-6 text-uppercase" style="letter-spacing:1px">Usuarios registrados</div>
+                    <div class="text-h4 text-weight-bold text-dark q-mt-xs">{{ stats.totalUsuarios }}</div>
+                  </div>
+                  <q-icon name="people" size="40px" color="blue-3" />
+                </div>
+              </q-card-section>
+            </q-card>
+
+            <q-card flat class="col kpi-card" style="border-radius:12px; border-left: 4px solid #2E7D32">
+              <q-card-section class="q-pa-md">
+                <div class="row items-center justify-between">
+                  <div>
+                    <div class="text-caption text-grey-6 text-uppercase" style="letter-spacing:1px">Usuarios activos</div>
+                    <div class="text-h4 text-weight-bold text-dark q-mt-xs">{{ stats.usuariosActivos }}</div>
+                  </div>
+                  <q-icon name="person_check" size="40px" color="green-3" />
+                </div>
+              </q-card-section>
+            </q-card>
+
+            <q-card flat class="col kpi-card" style="border-radius:12px; border-left: 4px solid #1E88E5">
+              <q-card-section class="q-pa-md">
+                <div class="row items-center justify-between">
+                  <div>
+                    <div class="text-caption text-grey-6 text-uppercase" style="letter-spacing:1px">Transacciones</div>
+                    <div class="text-h4 text-weight-bold text-dark q-mt-xs">{{ stats.totalTransacciones }}</div>
+                  </div>
+                  <q-icon name="receipt_long" size="40px" color="blue-2" />
+                </div>
+              </q-card-section>
+            </q-card>
+
+            <q-card flat class="col kpi-card" style="border-radius:12px; border-left: 4px solid #C62828">
+              <q-card-section class="q-pa-md">
+                <div class="row items-center justify-between">
+                  <div>
+                    <div class="text-caption text-grey-6 text-uppercase" style="letter-spacing:1px">Disputas activas</div>
+                    <div class="text-h4 text-weight-bold text-dark q-mt-xs">{{ stats.disputasActivas }}</div>
+                  </div>
+                  <q-icon name="warning" size="40px" color="red-3" />
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+
+          <!-- graficos -->
+          <div class="row q-gutter-md q-mb-lg">
+            <!-- barras transacciones por dia -->
+            <q-card flat class="col-12 col-md-7" style="border-radius:12px; border:1px solid #E3F2FD">
+              <q-card-section>
+                <div class="text-subtitle1 text-weight-bold q-mb-md">Transacciones por dia</div>
+                <canvas ref="barChartRef" height="120"></canvas>
+              </q-card-section>
+            </q-card>
+
+            <!-- donut estados -->
+            <q-card flat class="col-12 col-md-4" style="border-radius:12px; border:1px solid #E3F2FD">
+              <q-card-section>
+                <div class="text-subtitle1 text-weight-bold q-mb-md">Estados de transaccion</div>
+                <canvas ref="donutChartRef" height="120"></canvas>
+                <div class="q-mt-md">
+                  <div v-for="(item, i) in estadosData" :key="i" class="row items-center q-mb-xs">
+                    <div class="q-mr-sm" :style="`width:12px;height:12px;border-radius:2px;background:${item.color}`"></div>
+                    <div class="text-caption">{{ item.label }}: <strong>{{ item.valor }}</strong></div>
+                  </div>
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+
+          <!-- disputas urgentes -->
+          <q-card flat style="border-radius:12px; border:1px solid #FFEBEE">
             <q-card-section>
-              <div class="text-caption text-grey">Total usuarios</div>
-              <div class="text-h5 text-orange">{{ totalUsuarios }}</div>
+              <div class="row items-center justify-between q-mb-md">
+                <div class="text-subtitle1 text-weight-bold text-negative">Disputas que requieren atencion</div>
+                <q-btn flat dense label="Ver todas" color="negative" @click="tab = 'disputas'" />
+              </div>
+              <div v-if="disputasUrgentes.length === 0" class="text-grey text-center q-pa-md">No hay disputas activas.</div>
+              <q-table
+                v-else
+                :rows="disputasUrgentes"
+                :columns="columnasDisputasUrgentes"
+                row-key="id"
+                flat dense hide-bottom
+                :rows-per-page-options="[5]"
+              >
+                <template #body-cell-estado="props">
+                  <q-td :props="props">
+                    <q-chip dense color="red-1" text-color="negative" size="sm">{{ props.row.estado }}</q-chip>
+                  </q-td>
+                </template>
+                <template #body-cell-accion="props">
+                  <q-td :props="props">
+                    <q-btn flat dense size="sm" color="negative" label="Revisar" @click="tab = 'disputas'" />
+                  </q-td>
+                </template>
+              </q-table>
             </q-card-section>
           </q-card>
-          <q-card flat bordered class="col-grow">
-            <q-card-section>
-              <div class="text-caption text-grey">Usuarios activos</div>
-              <div class="text-h5 text-orange">{{ usuariosActivos }}</div>
-            </q-card-section>
-          </q-card>
-          <q-card flat bordered class="col-grow">
-            <q-card-section>
-              <div class="text-caption text-grey">Total transacciones</div>
-              <div class="text-h5 text-orange">{{ totalTransacciones }}</div>
-            </q-card-section>
-          </q-card>
-          <q-card flat bordered class="col-grow">
-            <q-card-section>
-              <div class="text-caption text-grey">Transacciones finalizadas</div>
-              <div class="text-h5 text-orange">{{ transaccionesFinalizadas }}</div>
-            </q-card-section>
-          </q-card>
-          <q-card flat bordered class="col-grow">
-            <q-card-section>
-              <div class="text-caption text-grey">Disputas activas</div>
-              <div class="text-h5 text-orange">{{ disputasActivas }}</div>
-            </q-card-section>
-          </q-card>
-          <q-card flat bordered class="col-grow">
-            <q-card-section>
-              <div class="text-caption text-grey">Tasa de finalizacion</div>
-              <div class="text-h5 text-orange">{{ tasaFinalizacion }}%</div>
-            </q-card-section>
-          </q-card>
+
         </div>
       </q-tab-panel>
 
@@ -187,12 +271,25 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useQuasar } from 'quasar'
 import api from '@/services/api'
+import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, DoughnutController, ArcElement } from 'chart.js'
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, DoughnutController, ArcElement)
 
 const $q = useQuasar()
 const tab = ref('dashboard')
+const barChartRef = ref(null)
+const donutChartRef = ref(null)
+let barChart = null
+let donutChart = null
+
+const periodo = ref(30)
+const opcionesPeriodo = [
+  { label: 'Ultimos 7 dias', value: 7 },
+  { label: 'Ultimos 30 dias', value: 30 },
+  { label: 'Ultimos 90 dias', value: 90 },
+]
 const usuarios = ref([])
 const transacciones = ref([])
 const disputas = ref([])
@@ -225,15 +322,40 @@ const columnasTx = [
   { name: 'fecha', label: 'Fecha', field: 'fechaInicio', align: 'left', format: v => v ? new Date(v).toLocaleDateString('es-PE') : '-' },
 ]
 
-const totalUsuarios = computed(() => usuarios.value.length)
-const usuariosActivos = computed(() => usuarios.value.filter(u => u.isActive).length)
-const totalTransacciones = computed(() => transacciones.value.length)
-const transaccionesFinalizadas = computed(() => transacciones.value.filter(t => t.estadoActual === 'FINALIZADA').length)
-const disputasActivas = computed(() => disputas.value.filter(d => d.estado !== 'RESUELTA').length)
 const usuariosSinValidar = computed(() => usuarios.value.filter(u => !u.identidadValidada))
-const tasaFinalizacion = computed(() => {
-  if (totalTransacciones.value === 0) return 0
-  return ((transaccionesFinalizadas.value / totalTransacciones.value) * 100).toFixed(1)
+
+const stats = computed(() => ({
+  totalUsuarios: usuarios.value.length,
+  usuariosActivos: usuarios.value.filter(u => u.isActive).length,
+  totalTransacciones: transacciones.value.length,
+  disputasActivas: disputas.value.filter(d => d.estado !== 'RESUELTA').length,
+  tasaFinalizacion: transacciones.value.length
+    ? Math.round((transacciones.value.filter(t => t.estadoActual === 'FINALIZADA').length / transacciones.value.length) * 100)
+    : 0
+}))
+
+const disputasUrgentes = computed(() => disputas.value.filter(d => d.estado !== 'RESUELTA').slice(0, 5))
+
+const columnasDisputasUrgentes = [
+  { name: 'id', label: 'ID', field: 'id', align: 'left' },
+  { name: 'transaccionId', label: 'Transaccion', field: 'transaccionId', align: 'left' },
+  { name: 'motivo', label: 'Motivo', field: 'motivo', align: 'left' },
+  { name: 'estado', label: 'Estado', field: 'estado', align: 'center' },
+  { name: 'accion', label: 'Accion', field: 'accion', align: 'center' },
+]
+
+const estadosData = computed(() => {
+  const conteo = {}
+  transacciones.value.forEach(t => {
+    conteo[t.estadoActual] = (conteo[t.estadoActual] || 0) + 1
+  })
+  const colores = {
+    FINALIZADA: '#2E7D32', INICIADA: '#1565C0', PAGO_REPORTADO: '#7B1FA2',
+    CANCELADA: '#757575', EN_DISPUTA: '#C62828', RESUELTA: '#00838F'
+  }
+  return Object.entries(conteo).map(([label, valor]) => ({
+    label, valor, color: colores[label] || '#90A4AE'
+  }))
 })
 
 async function cargarUsuarios() {
@@ -321,6 +443,62 @@ async function resolverDisputa() {
   }
 }
 
+function transaccionesPorDia() {
+  const dias = periodo.value
+  const hoy = new Date()
+  const fechas = []
+  const conteos = []
+  for (let i = dias - 1; i >= 0; i--) {
+    const fecha = new Date(hoy)
+    fecha.setDate(hoy.getDate() - i)
+    const key = fecha.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' })
+    fechas.push(key)
+    const inicio = new Date(fecha); inicio.setHours(0,0,0,0)
+    const fin = new Date(fecha); fin.setHours(23,59,59,999)
+    conteos.push(transacciones.value.filter(t => {
+      const f = new Date(t.fechaInicio)
+      return f >= inicio && f <= fin
+    }).length)
+  }
+  return { fechas, conteos }
+}
+
+function actualizarGraficos() {
+  nextTick(() => {
+    const { fechas, conteos } = transaccionesPorDia()
+    if (barChartRef.value) {
+      if (barChart) barChart.destroy()
+      barChart = new Chart(barChartRef.value, {
+        type: 'bar',
+        data: {
+          labels: fechas,
+          datasets: [{ label: 'Transacciones', data: conteos, backgroundColor: '#1E88E5', borderRadius: 4 }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+      })
+    }
+    if (donutChartRef.value && estadosData.value.length > 0) {
+      if (donutChart) donutChart.destroy()
+      donutChart = new Chart(donutChartRef.value, {
+        type: 'doughnut',
+        data: {
+          labels: estadosData.value.map(e => e.label),
+          datasets: [{ data: estadosData.value.map(e => e.valor), backgroundColor: estadosData.value.map(e => e.color), borderWidth: 2 }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      })
+    }
+  })
+}
+
+function actualizarDashboard() {
+  actualizarGraficos()
+}
+
+watch(tab, (nuevoTab) => {
+  if (nuevoTab === 'dashboard') actualizarGraficos()
+})
+
 function colorEstado(estado) {
   const colores = {
     INICIADA: 'blue', PENDIENTE_PAGO: 'orange', PAGO_REPORTADO: 'purple',
@@ -334,5 +512,6 @@ onMounted(() => {
   cargarUsuarios()
   cargarTransacciones()
   cargarDisputas()
+  setTimeout(actualizarGraficos, 500)
 })
 </script>

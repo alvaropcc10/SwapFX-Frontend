@@ -38,23 +38,77 @@
               </q-chip>
             </div>
             <div class="col-auto">
+              <q-btn
+                v-if="tx.estadoActual === 'FINALIZADA'"
+                flat
+                dense
+                color="blue-9"
+                label="Calificar"
+                icon="star"
+                @click.stop="abrirCalificar(tx)"
+              />
+            </div>
+            <div class="col-auto">
               <q-icon name="chevron_right" color="grey" />
             </div>
           </div>
         </q-card-section>
       </q-card>
     </div>
+
+    <!-- dialog calificar -->
+    <q-dialog v-model="verCalificar">
+      <q-card style="min-width: 360px">
+        <q-bar class="bg-blue-9 text-white">
+          <q-icon name="star" />
+          <div class="q-ml-sm">Calificar a {{ contraparte.nombre }}</div>
+          <q-space />
+          <q-btn dense flat icon="close" v-close-popup />
+        </q-bar>
+        <q-card-section class="column items-center q-gutter-sm">
+          <q-rating v-model="calificacion.puntuacion" size="2.5em" color="orange" icon="star_border" icon-selected="star" :max="5" />
+          <q-input
+            v-model="calificacion.comentario"
+            label="Comentario (opcional)"
+            outlined
+            dense
+            type="textarea"
+            rows="3"
+            class="full-width"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancelar" v-close-popup />
+          <q-btn
+            color="blue-9"
+            label="Enviar"
+            unelevated
+            :loading="enviandoCalificacion"
+            :disable="calificacion.puntuacion === 0"
+            @click="enviarCalificacion"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import { useAuthStore } from '@/stores/authStore'
 import api from '@/services/api'
 
 const router = useRouter()
+const $q = useQuasar()
+const authStore = useAuthStore()
 const transacciones = ref([])
 const cargando = ref(false)
+const verCalificar = ref(false)
+const enviandoCalificacion = ref(false)
+const contraparte = reactive({ id: null, nombre: '' })
+const calificacion = reactive({ transaccionId: null, puntuacion: 0, comentario: '' })
 
 async function cargarTransacciones() {
   cargando.value = true
@@ -70,6 +124,39 @@ async function cargarTransacciones() {
 
 function verDetalle(id) {
   router.push(`/transacciones/${id}`)
+}
+
+function abrirCalificar(tx) {
+  const usuarioId = authStore.usuario?.id
+  if (usuarioId === tx.compradorId) {
+    contraparte.id = tx.vendedorId
+    contraparte.nombre = tx.nombreVendedor
+  } else {
+    contraparte.id = tx.compradorId
+    contraparte.nombre = tx.nombreComprador
+  }
+  calificacion.transaccionId = tx.id
+  calificacion.puntuacion = 0
+  calificacion.comentario = ''
+  verCalificar.value = true
+}
+
+async function enviarCalificacion() {
+  enviandoCalificacion.value = true
+  try {
+    await api.post('/api/calificacion', {
+      transaccionId: calificacion.transaccionId,
+      usuarioCalificadoId: contraparte.id,
+      puntuacion: calificacion.puntuacion,
+      comentario: calificacion.comentario,
+    })
+    verCalificar.value = false
+    $q.notify({ type: 'positive', message: 'Calificacion enviada.' })
+  } catch {
+    $q.notify({ type: 'negative', message: 'Error al enviar la calificacion.' })
+  } finally {
+    enviandoCalificacion.value = false
+  }
 }
 
 function formatFecha(fecha) {

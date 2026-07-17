@@ -10,6 +10,12 @@
             <div>
               <div class="text-body2 text-weight-medium">{{ oferta.usuarioNombre }}</div>
               <div class="text-caption text-grey">{{ oferta.tipo === 'C' ? 'Compra' : 'Venta' }}</div>
+              <div class="text-caption text-grey">
+                <template v-if="totalCalificaciones > 0">
+                  Reputacion: {{ promedioCalificacion }} <q-icon name="star" color="orange" size="14px" /> ({{ totalCalificaciones }} opiniones)
+                </template>
+                <template v-else>Sin calificaciones aun.</template>
+              </div>
             </div>
           </div>
         </div>
@@ -60,7 +66,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import api from '@/services/api'
 
 const props = defineProps({ oferta: { type: Object, required: true } })
 defineEmits(['iniciar'])
@@ -69,4 +76,26 @@ const iniciales = computed(() => {
   const nombre = props.oferta.usuarioNombre || ''
   return nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
 })
+
+const calificaciones = ref([])
+
+const totalCalificaciones = computed(() => calificaciones.value.length)
+
+const promedioCalificacion = computed(() => {
+  if (totalCalificaciones.value === 0) return 0
+  const suma = calificaciones.value.reduce((acc, c) => acc + c.puntuacion, 0)
+  return (suma / totalCalificaciones.value).toFixed(1)
+})
+
+async function cargarReputacion() {
+  if (!props.oferta.usuarioId) return
+  try {
+    const res = await api.get(`/api/calificacion/${props.oferta.usuarioId}`)
+    calificaciones.value = res.data.datos ?? res.data
+  } catch (e) {
+    console.error('error reputacion', e)
+  }
+}
+
+onMounted(cargarReputacion)
 </script>

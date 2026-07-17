@@ -3,8 +3,17 @@ import axios from 'axios'
 const BASE = 'https://api.frankfurter.app'
 
 export async function obtenerTipoCambio(desde, hasta) {
-  const res = await axios.get(`${BASE}/latest?from=${desde}&to=${hasta}`)
-  return res.data.rates[hasta]
+  try {
+    const res = await axios.get(`${BASE}/latest?from=${desde}&to=${hasta}`)
+    return res.data.rates[hasta]
+  } catch {
+    const fallbacks = {
+      'USD-PEN': 3.72, 'PEN-USD': 0.269,
+      'EUR-PEN': 4.05, 'PEN-EUR': 0.247,
+      'USD-EUR': 0.92, 'EUR-USD': 1.087,
+    }
+    return fallbacks[`${desde}-${hasta}`] ?? null
+  }
 }
 
 export async function obtenerTodosLosTipos() {

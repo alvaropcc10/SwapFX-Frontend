@@ -54,7 +54,20 @@
               />
             </div>
             <q-input v-model.number="nuevaOferta.monto" label="Monto" type="number" outlined dense :rules="[v => v > 0 || 'Debe ser mayor a 0']" />
-            <q-input v-model.number="nuevaOferta.tipoCambio" label="Tipo de cambio" type="number" step="0.0001" outlined dense :rules="[v => v > 0 || 'Debe ser mayor a 0']" />
+            <q-input
+              v-model.number="nuevaOferta.tipoCambio"
+              label="Tipo de cambio"
+              type="number"
+              step="0.0001"
+              outlined
+              dense
+              :loading="cargandoTipoCambio"
+              :rules="[v => v > 0 || 'Debe ser mayor a 0']"
+            >
+              <template v-slot:append>
+                <q-spinner v-if="cargandoTipoCambio" color="blue-9" size="20px" />
+              </template>
+            </q-input>
             <q-input v-model.number="nuevaOferta.validezHoras" label="Validez (horas)" type="number" outlined dense />
             <q-input v-model="nuevaOferta.notas" label="Notas (opcional)" outlined dense />
             <div class="row justify-end q-gutter-sm q-mt-sm">
@@ -119,10 +132,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
+import { obtenerTipoCambio } from '@/services/tipoCambioService'
 import OfertaFiltro from '@/components/ofertas/OfertaFiltro.vue'
 import OfertaLista from '@/components/ofertas/OfertaLista.vue'
 
@@ -133,6 +147,7 @@ const ofertas = ref([])
 const misOfertas = ref([])
 const cargando = ref(false)
 const publicando = ref(false)
+const cargandoTipoCambio = ref(false)
 const iniciando = ref(false)
 const verPublicar = ref(false)
 const verMisOfertas = ref(false)
@@ -142,9 +157,9 @@ const paginaActual = ref(1)
 const totalPaginas = ref(1)
 
 const monedas = [
-  { label: 'USD', value: 1 },
-  { label: 'EUR', value: 2 },
-  { label: 'PEN', value: 3 },
+  { label: 'PEN', value: 1 },
+  { label: 'USD', value: 2 },
+  { label: 'EUR', value: 3 },
 ]
 
 const nuevaOferta = reactive({
@@ -158,6 +173,25 @@ const nuevaOferta = reactive({
 })
 
 const filtrosActivos = ref({})
+
+function codigoMoneda(id) {
+  return monedas.find(m => m.value === id)?.label ?? null
+}
+
+watch([() => nuevaOferta.monedaOrigenId, () => nuevaOferta.monedaDestinoId], async ([origenId, destinoId]) => {
+  const origen = codigoMoneda(origenId)
+  const destino = codigoMoneda(destinoId)
+  if (!origen || !destino || origen === destino) return
+
+  cargandoTipoCambio.value = true
+  try {
+    nuevaOferta.tipoCambio = await obtenerTipoCambio(origen, destino)
+  } catch (e) {
+    console.error('error tipo de cambio', e)
+  } finally {
+    cargandoTipoCambio.value = false
+  }
+})
 
 async function cargarOfertas() {
   cargando.value = true

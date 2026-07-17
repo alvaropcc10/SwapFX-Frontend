@@ -53,7 +53,7 @@
                 label="Reportar comprobante de pago"
                 icon="upload"
                 unelevated
-                @click="verComprobante = true"
+                @click="abrirComprobante"
               />
               <q-btn
                 v-if="puedeConfirmarPago"
@@ -116,9 +116,19 @@
         </q-bar>
         <q-card-section>
           <q-form @submit.prevent="enviarComprobante" class="column q-gutter-sm">
-            <q-input v-model="comprobante.nombreArchivo" label="Nombre del archivo" outlined dense :rules="[v => !!v || 'Requerido']" />
-            <q-input v-model="comprobante.rutaArchivo" label="Ruta o URL del archivo" outlined dense :rules="[v => !!v || 'Requerido']" />
-            <q-input v-model="comprobante.formatoArchivo" label="Formato (PDF, JPG, PNG)" outlined dense :rules="[v => !!v || 'Requerido']" />
+            <q-file
+              v-model="archivoSeleccionado"
+              label="Comprobante de pago (JPG, PNG o PDF)"
+              outlined
+              dense
+              accept=".jpg,.jpeg,.png,.pdf"
+              :rules="[v => !!v || 'Requerido']"
+              @update:model-value="onArchivoSeleccionado"
+            >
+              <template v-slot:prepend>
+                <q-icon name="attach_file" />
+              </template>
+            </q-file>
             <q-input v-model="comprobante.numeroOperacion" label="Numero de operacion bancaria" outlined dense />
             <q-input v-model="comprobante.fechaTransferencia" label="Fecha de transferencia" type="datetime-local" outlined dense :rules="[v => !!v || 'Requerido']" />
             <div class="row justify-end q-gutter-sm">
@@ -195,6 +205,8 @@ const verCancelar = ref(false)
 const verDisputa = ref(false)
 const motivoCancelacion = ref('')
 
+const archivoSeleccionado = ref(null)
+
 const comprobante = reactive({
   transaccionId: null,
   nombreArchivo: '',
@@ -259,6 +271,34 @@ async function cancelarTx() {
   } finally {
     cancelando.value = false
   }
+}
+
+function datetimeLocalActual() {
+  const d = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function abrirComprobante() {
+  archivoSeleccionado.value = null
+  comprobante.nombreArchivo = ''
+  comprobante.rutaArchivo = ''
+  comprobante.formatoArchivo = ''
+  comprobante.numeroOperacion = ''
+  comprobante.fechaTransferencia = datetimeLocalActual()
+  verComprobante.value = true
+}
+
+function onArchivoSeleccionado(file) {
+  if (!file) {
+    comprobante.nombreArchivo = ''
+    comprobante.rutaArchivo = ''
+    comprobante.formatoArchivo = ''
+    return
+  }
+  comprobante.nombreArchivo = file.name
+  comprobante.rutaArchivo = file.name
+  comprobante.formatoArchivo = file.name.split('.').pop().toUpperCase()
 }
 
 async function enviarComprobante() {

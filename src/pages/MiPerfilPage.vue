@@ -36,6 +36,28 @@
             </div>
           </q-card-section>
         </q-card>
+
+        <!-- validacion de identidad -->
+        <q-card flat bordered class="q-mt-md">
+          <q-card-section>
+            <div class="text-subtitle1 text-blue-9 text-weight-bold q-mb-sm">Validacion de identidad</div>
+            <div class="row items-center q-gutter-sm">
+              <q-chip v-if="authStore.usuario?.identidadValidada" color="green" text-color="white" dense size="sm" icon="verified">
+                VERIFICADO
+              </q-chip>
+              <q-chip v-else color="grey" text-color="white" dense size="sm">
+                Sin verificar
+              </q-chip>
+              <q-btn
+                v-if="!authStore.usuario?.identidadValidada"
+                flat dense
+                color="blue-9"
+                label="Solicitar verificacion"
+                @click="verValidarIdentidad = true"
+              />
+            </div>
+          </q-card-section>
+        </q-card>
       </div>
 
       <!-- cuentas bancarias -->
@@ -114,6 +136,45 @@
         </q-card-section>
       </q-card>
     </q-dialog>
+    <!-- dialog solicitar verificacion de identidad -->
+    <q-dialog v-model="verValidarIdentidad" persistent>
+      <q-card style="min-width: 380px">
+        <q-bar class="bg-blue-9 text-white">
+          <q-icon name="verified" />
+          <div class="q-ml-sm">Solicitar verificacion de identidad</div>
+          <q-space />
+          <q-btn dense flat icon="close" v-close-popup />
+        </q-bar>
+        <q-card-section>
+          <q-form @submit.prevent="enviarDocumento" class="column q-gutter-sm">
+            <q-file
+              v-model="archivoDocumento"
+              label="Documento (JPG, PNG o PDF)"
+              outlined
+              dense
+              accept=".jpg,.jpeg,.png,.pdf"
+              :rules="[v => !!v || 'Requerido']"
+            >
+              <template v-slot:prepend>
+                <q-icon name="attach_file" />
+              </template>
+            </q-file>
+            <q-select
+              v-model="documento.tipoDoc"
+              :options="['DNI', 'Pasaporte']"
+              label="Tipo de documento"
+              outlined dense
+              :rules="[v => !!v || 'Requerido']"
+            />
+            <q-input v-model="documento.numeroDoc" label="Numero de documento" outlined dense :rules="[v => !!v || 'Requerido']" />
+            <div class="row justify-end q-gutter-sm q-mt-sm">
+              <q-btn flat label="Cancelar" v-close-popup />
+              <q-btn type="submit" color="blue-9" label="Enviar" unelevated :loading="enviandoDocumento" />
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -130,10 +191,15 @@ const cuentas = ref([])
 const cargando = ref(false)
 const guardando = ref(false)
 const verAgregar = ref(false)
+const verValidarIdentidad = ref(false)
+const enviandoDocumento = ref(false)
+const archivoDocumento = ref(null)
 
 const nuevaCuenta = reactive({
   banco: '', titular: '', tipoCuenta: '', numeroCuenta: '', cci: '', moneda: '', esPrincipal: false
 })
+
+const documento = reactive({ tipoDoc: '', numeroDoc: '' })
 
 async function cargarCuentas() {
   cargando.value = true
@@ -159,6 +225,27 @@ async function agregarCuenta() {
     $q.notify({ type: 'negative', message: 'Error al guardar la cuenta.' })
   } finally {
     guardando.value = false
+  }
+}
+
+async function enviarDocumento() {
+  enviandoDocumento.value = true
+  try {
+    await api.post('/api/documentoidentidad', {
+      tipoDoc: documento.tipoDoc,
+      numeroDoc: documento.numeroDoc,
+      rutaArchivo: archivoDocumento.value?.name,
+      estado: 'Pendiente',
+    })
+    verValidarIdentidad.value = false
+    $q.notify({ type: 'positive', message: 'Documento enviado para revision.' })
+    archivoDocumento.value = null
+    documento.tipoDoc = ''
+    documento.numeroDoc = ''
+  } catch {
+    $q.notify({ type: 'negative', message: 'Error al enviar el documento.' })
+  } finally {
+    enviandoDocumento.value = false
   }
 }
 

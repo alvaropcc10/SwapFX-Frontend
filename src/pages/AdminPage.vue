@@ -7,6 +7,7 @@
       <q-tab name="usuarios" label="Usuarios" icon="people" />
       <q-tab name="transacciones" label="Transacciones" icon="receipt_long" />
       <q-tab name="disputas" label="Disputas" icon="warning" />
+      <q-tab name="documentos" label="Documentos" icon="badge" />
     </q-tabs>
     <q-separator />
 
@@ -131,6 +132,29 @@
           </q-item>
         </q-list>
       </q-tab-panel>
+      <!-- documentos -->
+      <q-tab-panel name="documentos">
+        <div v-if="cargandoUsuarios" class="text-center q-pa-xl"><q-spinner color="orange" size="2em" /></div>
+        <div v-else-if="usuariosSinValidar.length === 0" class="text-grey text-center q-pa-xl">No hay documentos pendientes.</div>
+        <q-list v-else separator bordered>
+          <q-item v-for="u in usuariosSinValidar" :key="u.id">
+            <q-item-section>
+              <q-item-label>{{ u.nombres }} {{ u.apellidos }}</q-item-label>
+              <q-item-label caption>{{ u.email }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-btn
+                color="orange"
+                dense
+                unelevated
+                label="Aprobar"
+                :loading="aprobandoId === u.id"
+                @click="aprobarIdentidad(u)"
+              />
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-tab-panel>
     </q-tab-panels>
 
     <!-- dialog resolver disputa -->
@@ -178,6 +202,7 @@ const cargandoDisputas = ref(false)
 const verResolver = ref(false)
 const resolviendo = ref(false)
 const disputaSeleccionada = ref(null)
+const aprobandoId = ref(null)
 
 const resolucion = reactive({ disputaId: null, resolucion: '', estadoFinal: 'RESUELTA' })
 
@@ -205,6 +230,7 @@ const usuariosActivos = computed(() => usuarios.value.filter(u => u.isActive).le
 const totalTransacciones = computed(() => transacciones.value.length)
 const transaccionesFinalizadas = computed(() => transacciones.value.filter(t => t.estadoActual === 'FINALIZADA').length)
 const disputasActivas = computed(() => disputas.value.filter(d => d.estado !== 'RESUELTA').length)
+const usuariosSinValidar = computed(() => usuarios.value.filter(u => !u.identidadValidada))
 const tasaFinalizacion = computed(() => {
   if (totalTransacciones.value === 0) return 0
   return ((transaccionesFinalizadas.value / totalTransacciones.value) * 100).toFixed(1)
@@ -257,6 +283,19 @@ async function cambiarEstado(usuario) {
     cargarUsuarios()
   } catch {
     $q.notify({ type: 'negative', message: 'Error al cambiar estado.' })
+  }
+}
+
+async function aprobarIdentidad(usuario) {
+  aprobandoId.value = usuario.id
+  try {
+    await api.put('/api/administracion/usuarios/validar-identidad', { usuarioId: usuario.id })
+    $q.notify({ type: 'positive', message: 'Identidad validada.' })
+    cargarUsuarios()
+  } catch {
+    $q.notify({ type: 'negative', message: 'Error al validar la identidad.' })
+  } finally {
+    aprobandoId.value = null
   }
 }
 

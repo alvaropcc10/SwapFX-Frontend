@@ -22,7 +22,8 @@ export const useAuthStore = defineStore('auth', () => {
       nombres: data.nombres,
       apellidos: data.apellidos,
       email: data.email,
-      tipo: data.tipo
+      tipo: data.tipo,
+      identidadValidada: data.identidadValidada
     }
     localStorage.setItem('swapfx_token', data.token)
     localStorage.setItem('swapfx_usuario', JSON.stringify(usuario.value))

@@ -1,61 +1,60 @@
 <template>
-  <q-card flat bordered class="q-mb-sm">
-    <q-card-section>
+  <q-card
+    flat
+    class="q-mb-sm oferta-card"
+    style="border-radius:12px; border:1px solid #E3F2FD; transition: box-shadow 0.2s"
+    @mouseenter="hover = true"
+    @mouseleave="hover = false"
+    :style="hover ? 'box-shadow: 0 4px 20px rgba(21,101,192,0.15)' : ''"
+  >
+    <q-card-section class="q-pa-md">
       <div class="row items-center q-gutter-md">
+        <div class="col-auto">
+          <q-avatar size="42px" style="background: linear-gradient(135deg, #1565C0, #1E88E5)" text-color="white" class="text-subtitle1 text-weight-bold">
+            {{ iniciales }}
+          </q-avatar>
+        </div>
         <div class="col">
-          <div class="row items-center q-gutter-xs">
-            <q-avatar size="32px" color="blue-9" text-color="white" class="text-caption">
-              {{ iniciales }}
-            </q-avatar>
-            <div>
-              <div class="text-body2 text-weight-medium">{{ oferta.usuarioNombre }}</div>
-              <div class="text-caption text-grey">{{ oferta.tipo === 'C' ? 'Compra' : 'Venta' }}</div>
-              <div class="text-caption text-grey">
-                <template v-if="totalCalificaciones > 0">
-                  Reputacion: {{ promedioCalificacion }} <q-icon name="star" color="orange" size="14px" /> ({{ totalCalificaciones }} opiniones)
-                </template>
-                <template v-else>Sin calificaciones aun.</template>
-              </div>
-            </div>
+          <div class="text-body2 text-weight-bold text-dark">{{ oferta.usuarioNombre }}</div>
+          <div class="text-caption text-grey">{{ oferta.tipo === 'C' ? 'Compra' : 'Venta' }}</div>
+          <div class="text-caption text-grey-6" v-if="totalCalificaciones > 0">
+            <q-icon name="star" color="amber" size="12px" />
+            {{ promedioCalificacion }} ({{ totalCalificaciones }} opiniones)
           </div>
+          <div class="text-caption text-grey-5" v-else>Sin calificaciones aun</div>
         </div>
 
         <div class="col text-center">
-          <div class="text-caption text-grey">Par</div>
-          <div class="text-body2 text-weight-bold">
+          <div class="text-caption text-grey-6 q-mb-xs">Par</div>
+          <q-chip dense color="blue-1" text-color="primary" class="text-weight-bold">
             {{ oferta.monedaOrigen }} → {{ oferta.monedaDestino }}
-          </div>
+          </q-chip>
         </div>
 
         <div class="col text-center">
-          <div class="text-caption text-grey">Monto</div>
-          <div class="text-body2">{{ oferta.monto }}</div>
+          <div class="text-caption text-grey-6 q-mb-xs">Monto</div>
+          <div class="text-body2 text-weight-bold">{{ oferta.monto }}</div>
         </div>
 
         <div class="col text-center">
-          <div class="text-caption text-grey">Tipo de cambio</div>
-          <div class="text-body2 text-weight-bold text-blue-9">{{ oferta.tipoCambio }}</div>
+          <div class="text-caption text-grey-6 q-mb-xs">Tipo de cambio</div>
+          <div class="text-h6 text-primary text-weight-bold">{{ oferta.tipoCambio }}</div>
         </div>
 
         <div class="col text-center">
-          <div class="text-caption text-grey">Estado</div>
-          <q-chip
-            :color="oferta.estado === 'PUBLICADA' ? 'green' : 'grey'"
-            text-color="white"
-            dense
-            size="sm"
-          >
+          <div class="text-caption text-grey-6 q-mb-xs">Estado</div>
+          <q-chip dense :color="oferta.estado === 'PUBLICADA' ? 'positive' : 'grey'" text-color="white" size="sm">
             {{ oferta.estado }}
           </q-chip>
         </div>
 
         <div class="col-auto">
           <q-btn
-            flat
-            dense
+            unelevated
             round
             icon="swap_horiz"
-            color="blue-9"
+            color="primary"
+            size="sm"
             title="Iniciar transaccion"
             @click="$emit('iniciar', oferta)"
           />
@@ -71,6 +70,8 @@ import api from '@/services/api'
 
 const props = defineProps({ oferta: { type: Object, required: true } })
 defineEmits(['iniciar'])
+
+const hover = ref(false)
 
 const iniciales = computed(() => {
   const nombre = props.oferta.usuarioNombre || ''

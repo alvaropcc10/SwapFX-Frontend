@@ -1,6 +1,12 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="text-h5 text-blue-9 q-mb-md">Mis transacciones</div>
+    <div class="row items-center justify-between q-mb-md">
+      <div class="text-h5 text-blue-9">Mis transacciones</div>
+      <div class="row q-gutter-sm">
+        <q-btn color="green" label="Exportar Excel" icon="download" unelevated dense @click="exportarExcel" />
+        <q-btn color="red" label="Exportar PDF" icon="picture_as_pdf" unelevated dense @click="exportarPDF" />
+      </div>
+    </div>
 
     <div v-if="cargando" class="text-center q-pa-xl">
       <q-spinner color="blue-9" size="3em" />
@@ -99,6 +105,9 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@/services/api'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -162,6 +171,49 @@ async function enviarCalificacion() {
 function formatFecha(fecha) {
   if (!fecha) return '-'
   return new Date(fecha).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function exportarExcel() {
+  const datos = transacciones.value.map(tx => ({
+    Codigo: tx.codigo,
+    Estado: tx.estadoActual,
+    'Moneda Origen': tx.monedaOrigen,
+    'Moneda Destino': tx.monedaDestino,
+    'Monto Origen': tx.montoOrigen,
+    'Tipo de Cambio': tx.tipoCambioAplicado,
+    Comprador: tx.nombreComprador,
+    Vendedor: tx.nombreVendedor,
+    'Fecha Inicio': formatFecha(tx.fechaInicio),
+  }))
+
+  const hoja = XLSX.utils.json_to_sheet(datos)
+  const libro = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(libro, hoja, 'Transacciones')
+  XLSX.writeFile(libro, 'swapfx_transacciones.xlsx')
+}
+
+function exportarPDF() {
+  const doc = new jsPDF()
+
+  doc.setFontSize(16)
+  doc.text('SwapFX - Reporte de Transacciones', 14, 16)
+  doc.setFontSize(10)
+  doc.text(`Generado: ${formatFecha(new Date().toISOString())}`, 14, 22)
+
+  autoTable(doc, {
+    startY: 28,
+    head: [['Codigo', 'Estado', 'Par', 'Monto', 'TC', 'Fecha']],
+    body: transacciones.value.map(tx => [
+      tx.codigo,
+      tx.estadoActual,
+      `${tx.monedaOrigen} → ${tx.monedaDestino}`,
+      tx.montoOrigen,
+      tx.tipoCambioAplicado,
+      formatFecha(tx.fechaInicio),
+    ]),
+  })
+
+  doc.save('swapfx_transacciones.pdf')
 }
 
 function colorEstado(estado) {
